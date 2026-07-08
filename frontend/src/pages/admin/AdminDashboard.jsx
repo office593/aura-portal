@@ -1462,9 +1462,11 @@ function PlansManager() {
   }, [viewTenantId])
 
   function sanitizeFileName(name) {
-    const ext = name.slice(name.lastIndexOf('.'))
-    const base = name.slice(0, name.lastIndexOf('.'))
-    return base.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').replace(/^_+|_+$/g, '') + ext
+    const dotIdx = name.lastIndexOf('.')
+    const ext = dotIdx >= 0 ? name.slice(dotIdx) : ''
+    const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name
+    const cleanBase = base.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').replace(/^_+|_+$/g, '')
+    return (cleanBase || `file_${Date.now()}`) + ext
   }
 
   function handleFileChange(e) {
