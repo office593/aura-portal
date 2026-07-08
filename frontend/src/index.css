@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold:        #1B2A4A;
+  --gold-dark:   #111d35;
+  --gold-light:  #eef1f7;
+  --gold-border: #b0bcd4;
+}
+
+body {
+  font-family: 'Heebo', sans-serif;
+  direction: rtl;
+  background-color: #f0f2f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth progress bar animation */
+.progress-bar-fill {
+  transition: width 1s ease-in-out;
+}
+
+/* ── Global navy overrides ── */
+
+/* Buttons */
+.btn-primary,
+button[class*="bg-blue-6"],
+button[class*="bg-blue-7"],
+a[class*="bg-blue-6"],
+a[class*="bg-blue-7"] {
+  background-color: var(--gold) !important;
+  color: #fff !important;
+}
+button[class*="bg-blue-6"]:hover,
+button[class*="bg-blue-7"]:hover,
+a[class*="bg-blue-6"]:hover,
+a[class*="bg-blue-7"]:hover {
+  background-color: var(--gold-dark) !important;
+}
+
+/* Focus rings */
+*[class*="focus:ring-blue"] {
+  --tw-ring-color: var(--gold) !important;
+}
+
+/* Text blue → navy */
+[class*="text-blue-6"],
+[class*="text-blue-7"] {
+  color: var(--gold) !important;
+}
+
+/* Borders blue → navy */
+[class*="border-blue-2"],
+[class*="border-blue-4"] {
+  border-color: var(--gold-border) !important;
+}
+[class*="border-blue-7"] {
+  border-color: var(--gold) !important;
+}
+
+/* Light blue backgrounds → light navy */
+[class*="bg-blue-50"] {
+  background-color: var(--gold-light) !important;
+}
+[class*="hover\:bg-blue-50"]:hover {
+  background-color: var(--gold-light) !important;
+}
+[class*="hover\:text-blue-7"]:hover {
+  color: var(--gold-dark) !important;
+}
+[class*="hover\:border-blue"]:hover {
+  border-color: var(--gold) !important;
+}
