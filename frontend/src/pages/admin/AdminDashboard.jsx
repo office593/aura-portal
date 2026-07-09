@@ -1618,7 +1618,9 @@ function PlansManager() {
             {docs.length === 0 ? (
               <p className="text-center text-gray-400 text-sm py-4">אין קבצים</p>
             ) : (() => {
-              const displayDocs = docs
+              const displayDocs = viewTenantId === 'all'
+                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.url]) acc[d.url] = d; return acc }, {}))
+                : docs
               return (
                 <div className="space-y-2">
                   <p className="text-sm text-gray-500 mb-2">{displayDocs.length} קבצים</p>
