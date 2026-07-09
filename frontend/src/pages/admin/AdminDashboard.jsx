@@ -995,6 +995,7 @@ function TenantsManager() {
         ok++
       } catch { fail++ }
       setExtractProgress({ done: i + 1, total: withId.length, ok, fail })
+      await new Promise(r => setTimeout(r, 500)) // השהייה בין בקשות
     }
     setExtractingAll(false)
     load()
