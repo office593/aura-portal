@@ -1537,16 +1537,14 @@ function PlansManager() {
 
   async function delFromAll(filename) {
     if (!confirm('למחוק קובץ זה אצל כל הדיירים?')) return
-    const serverFilename = filename.split('/').pop()
-    await api.delete(`/tenant-docs/by-filename/${serverFilename}`)
+    await api.delete(`/tenant-docs/by-filename/${encodeURIComponent(filename)}`)
     api.get('/tenant-docs/all').then((r) => setDocs(r.data))
   }
 
   async function delSelectedFromAll(filenames) {
     if (!confirm(`למחוק ${filenames.length} קבצים אצל כל הדיירים?`)) return
     for (const fn of filenames) {
-      const serverFilename = fn.split('/').pop()
-      await api.delete(`/tenant-docs/by-filename/${serverFilename}`)
+      await api.delete(`/tenant-docs/by-filename/${encodeURIComponent(fn)}`)
     }
     setSelectedFilenames([])
     api.get('/tenant-docs/all').then((r) => setDocs(r.data))
@@ -1644,7 +1642,7 @@ function PlansManager() {
                     <p className="text-sm text-gray-500">{displayDocs.length} קבצים</p>
                     {viewTenantId === 'all' && (
                       <div className="flex items-center gap-2">
-                        <button onClick={() => setSelectedFilenames(selectedFilenames.length === displayDocs.length ? [] : displayDocs.map((d) => d.url))}
+                        <button onClick={() => setSelectedFilenames(selectedFilenames.length === displayDocs.length ? [] : displayDocs.map((d) => d.filename))}
                           className="text-xs text-blue-600 hover:underline">
                           {selectedFilenames.length === displayDocs.length ? 'בטל הכל' : 'בחר הכל'}
                         </button>
@@ -1658,10 +1656,10 @@ function PlansManager() {
                     )}
                   </div>
                   {displayDocs.map((doc) => (
-                    <div key={doc.id} className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selectedFilenames.includes(doc.url) ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+                    <div key={doc.id} className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selectedFilenames.includes(doc.filename) ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
                       {viewTenantId === 'all' && (
-                        <input type="checkbox" checked={selectedFilenames.includes(doc.url)}
-                          onChange={() => toggleSelectFilename(doc.url)}
+                        <input type="checkbox" checked={selectedFilenames.includes(doc.filename)}
+                          onChange={() => toggleSelectFilename(doc.filename)}
                           className="w-4 h-4 accent-red-500 flex-shrink-0 cursor-pointer" />
                       )}
                       <span className="text-2xl flex-shrink-0">📄</span>
@@ -1672,7 +1670,7 @@ function PlansManager() {
                       <a href={doc.url} target="_blank" rel="noreferrer"
                         className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>
                       {viewTenantId === 'all'
-                        ? <button onClick={() => delFromAll(doc.url)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק מכולם</button>
+                        ? <button onClick={() => delFromAll(doc.filename)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק מכולם</button>
                         : <button onClick={() => del(doc.id)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק</button>
                       }
                     </div>
