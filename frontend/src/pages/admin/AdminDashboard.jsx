@@ -1322,18 +1322,6 @@ function TenantsManager() {
                       localImgInputRef.current.value = ''
                       localImgInputRef.current.click()
                     }} className="text-orange-500 hover:text-orange-700 text-xs">✂️ העלה וחתוך</button>
-                    {t.id_image_url && (
-                      <button onClick={async () => {
-                        try {
-                          const res = await api.post(`/tenants/${t.id}/extract-avatar`)
-                          const blob = await fetch(res.data.avatar_url).then(r => r.blob())
-                          const previewUrl = URL.createObjectURL(blob)
-                          setAvatarRotation(0)
-                          setAvatarPreview({ tenantId: t.id, file: blob, previewUrl, name: t.name })
-                          load()
-                        } catch { alert('שגיאה בחילוץ תמונה') }
-                      }} className="text-purple-500 hover:text-purple-700 text-xs">📸 חלץ פנים</button>
-                    )}
                     {t.is_admin && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">אדמין</span>}
                   </div>
                 </td>
