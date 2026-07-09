@@ -48,7 +48,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{background:'linear-gradient(135deg,#f0f2f7 0%,#ede8dc 100%)'}}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4" style={{borderColor:'#1B2A4A', background:'#eef1f7'}}>
+          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4" style={{borderColor:'#1B2A4A', background:'#1B2A4A'}}>
             <img src="/logo.jpg" alt="אאורה" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">פורטל דיירים</h1>
