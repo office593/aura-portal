@@ -1091,34 +1091,12 @@ function TenantsManager() {
         <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} disabled={importing} />
       </label>
       <button
-        onClick={extractAllAvatars}
-        disabled={extractingAll || importing}
-        className="px-5 py-2.5 rounded-xl font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors disabled:opacity-50"
-      >
-        {extractingAll && extractProgress
-          ? `📸 חולץ... ${extractProgress.done}/${extractProgress.total}`
-          : '📸 חלץ פנים לכולם'}
-      </button>
-      <button
         onClick={deleteAllTenants}
         disabled={deletingAll}
         className="px-5 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
       >
         {deletingAll ? 'מוחק...' : '🗑️ מחק את כל הדיירים'}
       </button>
-      {extractProgress && (
-        <div className="w-full">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>חילוץ פנים: {extractProgress.done}/{extractProgress.total}</span>
-            <span className="text-green-600">✓ {extractProgress.ok} הצליחו</span>
-            {extractProgress.fail > 0 && <span className="text-red-500">✗ {extractProgress.fail} נכשלו</span>}
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-purple-500 h-2 rounded-full transition-all" style={{width: `${(extractProgress.done / extractProgress.total) * 100}%`}} />
-          </div>
-          {!extractingAll && <p className="text-xs text-green-600 mt-1">✅ החילוץ הסתיים!</p>}
-        </div>
-      )}
       {importResult && (
         <div className={`w-full text-sm rounded-xl px-4 py-2 ${importResult.error ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
           {importResult.error
