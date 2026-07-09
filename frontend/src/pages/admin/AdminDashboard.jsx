@@ -196,6 +196,20 @@ function StagesManager() {
     load()
   }
 
+  async function moveStage(id, direction) {
+    const cat = stages.find(s => s.id === id)?.category
+    const catStages = stages.filter(s => s.category === cat).sort((a, b) => a.order - b.order)
+    const idx = catStages.findIndex(s => s.id === id)
+    const swapIdx = idx + direction
+    if (swapIdx < 0 || swapIdx >= catStages.length) return
+    const a = catStages[idx], b = catStages[swapIdx]
+    await Promise.all([
+      api.put(`/project/stages/${a.id}`, { order: b.order }),
+      api.put(`/project/stages/${b.id}`, { order: a.order }),
+    ])
+    load()
+  }
+
   async function addStage() {
     if (!newForm.name.trim()) return alert('יש להזין שם שלב')
     setSaving(true)
@@ -295,6 +309,10 @@ function StagesManager() {
                   className="border rounded-lg px-2 py-1.5 text-xs w-16 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <span className="text-xs text-gray-400">%</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <button onClick={() => moveStage(s.id, -1)} className="text-gray-400 hover:text-gray-700 leading-none text-xs px-1">▲</button>
+                <button onClick={() => moveStage(s.id, 1)} className="text-gray-400 hover:text-gray-700 leading-none text-xs px-1">▼</button>
               </div>
               <button onClick={() => startEdit(s)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">
                 ✏️ ערוך
