@@ -326,6 +326,36 @@ function StagesManager() {
 
   return (
     <div className="space-y-6 mb-6">
+      {grouped.map(({ cat, items }) => {
+        const catPct = Math.round(items.reduce((a, s) => a + s.completion_pct, 0) / items.length)
+        const colorClass = CATEGORY_COLORS[cat] || 'bg-gray-600'
+        return (
+          <div key={cat} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* Category header */}
+            <div className={`${colorClass} px-6 py-4 flex items-center justify-between`}>
+              <h3 className="text-white font-bold text-base">{cat}</h3>
+              <span className="text-white text-sm opacity-90 bg-white/20 px-3 py-1 rounded-full">
+                {catPct}% הושלם
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="h-1.5 bg-gray-100">
+              <div className={`h-full ${colorClass} transition-all`} style={{ width: `${catPct}%` }} />
+            </div>
+            {/* Sub-stages */}
+            <div className="p-4 space-y-2">
+              {items.map(renderStage)}
+            </div>
+          </div>
+        )
+      })}
+      {uncategorized.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
+          <h3 className="text-sm font-semibold text-gray-500 mb-3">שלבים נוספים</h3>
+          {uncategorized.map(renderStage)}
+        </div>
+      )}
+
       {/* Add stage */}
       <div className="bg-white rounded-2xl shadow-sm p-4">
         {!showAdd ? (
@@ -362,36 +392,6 @@ function StagesManager() {
           </div>
         )}
       </div>
-
-      {grouped.map(({ cat, items }) => {
-        const catPct = Math.round(items.reduce((a, s) => a + s.completion_pct, 0) / items.length)
-        const colorClass = CATEGORY_COLORS[cat] || 'bg-gray-600'
-        return (
-          <div key={cat} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* Category header */}
-            <div className={`${colorClass} px-6 py-4 flex items-center justify-between`}>
-              <h3 className="text-white font-bold text-base">{cat}</h3>
-              <span className="text-white text-sm opacity-90 bg-white/20 px-3 py-1 rounded-full">
-                {catPct}% הושלם
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div className="h-1.5 bg-gray-100">
-              <div className={`h-full ${colorClass} transition-all`} style={{ width: `${catPct}%` }} />
-            </div>
-            {/* Sub-stages */}
-            <div className="p-4 space-y-2">
-              {items.map(renderStage)}
-            </div>
-          </div>
-        )
-      })}
-      {uncategorized.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
-          <h3 className="text-sm font-semibold text-gray-500 mb-3">שלבים נוספים</h3>
-          {uncategorized.map(renderStage)}
-        </div>
-      )}
     </div>
   )
 }
