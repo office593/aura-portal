@@ -93,7 +93,7 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-5 w-72 shadow-xl">
+      <div className="bg-white rounded-2xl p-5 w-72 shadow-xl max-h-[90vh] overflow-y-auto">
         <p className="text-center font-bold text-gray-700 mb-3">גרור את התמונה למיקום הרצוי</p>
         <div className="flex justify-center mb-3">
           <canvas
@@ -1151,11 +1151,9 @@ function TenantsManager() {
         {editingId && (
           <>
             <p className="text-xs text-gray-400 font-medium mb-2 mt-1">תעודת זהות</p>
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="mb-4">
               <input value={form.id_number} onChange={e => setForm({...form, id_number: e.target.value})}
                 placeholder="מספר תעודת זהות" className={inp} dir="ltr" />
-              <input value={form.id_image_url} onChange={e => setForm({...form, id_image_url: e.target.value})}
-                placeholder="קישור תמונת ת.ז. (Google Drive)" className={inp} dir="ltr" />
             </div>
           </>
         )}
@@ -1257,7 +1255,6 @@ function TenantsManager() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <input value={form.id_number} onChange={e => setForm({...form, id_number: e.target.value})} placeholder="מספר ת.ז." className={inp} dir="ltr" />
-                      <input value={form.id_image_url} onChange={e => setForm({...form, id_image_url: e.target.value})} placeholder="קישור תמונת ת.ז." className={inp} dir="ltr" />
                     </div>
                     <details className="text-xs text-gray-500">
                       <summary className="cursor-pointer">מפרט טכני</summary>
