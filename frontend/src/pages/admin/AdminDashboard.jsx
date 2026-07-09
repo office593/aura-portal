@@ -417,6 +417,7 @@ function GalleryManager() {
   const [saving, setSaving] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [dragging, setDragging] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
   const fileInputRef = useRef(null)
 
   async function load() {
@@ -562,14 +563,35 @@ function GalleryManager() {
       {/* Gallery grid */}
       {items.length > 0 && (
         <div>
-          <p className="text-sm text-gray-500 mb-3">{items.length} תמונות בגלריה</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-500">{items.length} תמונות בגלריה</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setSelectedIds(selectedIds.length === items.length ? [] : items.map(i => i.id))}
+                className="text-xs text-blue-600 hover:underline">
+                {selectedIds.length === items.length ? 'בטל הכל' : 'בחר הכל'}
+              </button>
+              {selectedIds.length > 0 && (
+                <button onClick={async () => {
+                  if (!confirm(`למחוק ${selectedIds.length} תמונות?`)) return
+                  for (const id of selectedIds) await api.delete(`/gallery/${id}`)
+                  setSelectedIds([])
+                  load()
+                }} className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-lg font-medium">
+                  🗑️ מחק {selectedIds.length} נבחרות
+                </button>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => (
-              <div key={item.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                <div className="relative">
+              <div key={item.id} className={`rounded-xl overflow-hidden border ${selectedIds.includes(item.id) ? 'border-red-400 ring-2 ring-red-300' : 'border-gray-100 bg-gray-50'}`}>
+                <div className="relative cursor-pointer" onClick={() => setSelectedIds(prev => prev.includes(item.id) ? prev.filter(i => i !== item.id) : [...prev, item.id])}>
                   <img src={item.url} alt="" className="w-full aspect-square object-cover" />
+                  <div className={`absolute top-1 right-1 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-colors ${selectedIds.includes(item.id) ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-gray-300'}`}>
+                    {selectedIds.includes(item.id) ? '✓' : ''}
+                  </div>
                   <button
-                    onClick={() => del(item.id)}
+                    onClick={(e) => { e.stopPropagation(); del(item.id) }}
                     className="absolute top-1 left-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
                   >✕</button>
                 </div>
@@ -1444,7 +1466,6 @@ function PlansManager() {
   const [selectedTenantId, setSelectedTenantId] = useState('all')
   const [docs, setDocs] = useState([])
   const [viewTenantId, setViewTenantId] = useState('')
-  const [selectedFilenames, setSelectedFilenames] = useState([])
   const [files, setFiles] = useState([]) // multiple files
   const [caption, setCaption] = useState('')
   const [saving, setSaving] = useState(false)
@@ -1459,91 +1480,53 @@ function PlansManager() {
 
   useEffect(() => {
     if (!viewTenantId) { setDocs([]); return }
-    if (viewTenantId === 'all') {
-      api.get('/tenant-docs/all').then((r) => setDocs(r.data))
-    } else {
-      api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
-    }
+    api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
   }, [viewTenantId])
-
-  function sanitizeFileName(name) {
-    const dotIdx = name.lastIndexOf('.')
-    const ext = dotIdx >= 0 ? name.slice(dotIdx) : ''
-    const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name
-    const cleanBase = base.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').replace(/^_+|_+$/g, '')
-    return (cleanBase || `file_${Date.now()}`) + ext
-  }
 
   function handleFileChange(e) {
     setUploadError('')
     const selected = Array.from(e.target.files)
     const invalid = selected.filter(f => !f.name.toLowerCase().endsWith('.pdf'))
     if (invalid.length) { setUploadError('יש לבחור קבצי PDF בלבד'); e.target.value = ''; return }
-    const hasHebrew = selected.some(f => /[֐-׿]/.test(f.name))
-    if (hasHebrew) {
-      setUploadError('⚠️ שם הקובץ מכיל עברית — השם ישונה אוטומטית לאנגלית לפני ההעלאה')
-    }
     setFiles(selected)
   }
 
   async function uploadToTenant(tenantId, file, isPersonal) {
-    const cleanName = sanitizeFileName(file.name) || `file_${Date.now()}.pdf`
-    const renamedFile = new File([file], cleanName, { type: file.type })
     const fd = new FormData()
     fd.append('tenant_id', tenantId)
-    fd.append('file', renamedFile)
+    fd.append('file', file)
     if (caption) fd.append('caption', caption)
     fd.append('is_personal', isPersonal ? '1' : '0')
     await api.post('/tenant-docs/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 
-  async function uploadBulk(file, tenantIds) {
-    const originalName = file.name
-    const cleanName = sanitizeFileName(file.name) || `file_${Date.now()}.pdf`
-    const renamedFile = new File([file], cleanName, { type: file.type })
-    const fd = new FormData()
-    fd.append('tenant_ids', tenantIds)
-    fd.append('file', renamedFile)
-    fd.append('original_filename', originalName)
-    if (caption) fd.append('caption', caption)
-    await api.post('/tenant-docs/upload-bulk', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-  }
-
   async function handleUpload(e) {
     e.preventDefault()
     if (!files.length) return
+    let targetTenants
+    if (selectedTenantId === 'all') {
+      targetTenants = tenants
+    } else if (String(selectedTenantId).startsWith('proj:')) {
+      const projName = selectedTenantId.slice(5)
+      targetTenants = tenants.filter(t => t.project === projName)
+    } else {
+      targetTenants = tenants.filter(t => String(t.id) === selectedTenantId)
+    }
+    if (!targetTenants.length) return
+    const isPersonal = !selectedTenantId.startsWith('proj:') && selectedTenantId !== 'all'
     setSaving(true); setUploadError(''); setProgress('')
     try {
-      const isSingle = !String(selectedTenantId).startsWith('proj:') && selectedTenantId !== 'all'
-      if (isSingle) {
-        // דייר בודד — upload רגיל
-        let done = 0
+      let done = 0
+      const total = files.length * targetTenants.length
+      for (const tenant of targetTenants) {
         for (const file of files) {
-          await uploadToTenant(selectedTenantId, file, true)
+          await uploadToTenant(tenant.id, file, isPersonal)
           done++
-          setProgress(`מעלה... ${done}/${files.length}`)
-        }
-      } else {
-        // כל הדיירים / פרויקט — bulk upload (קובץ פיזי אחד, הרבה רשומות)
-        let tenantIds
-        if (selectedTenantId === 'all') {
-          tenantIds = 'all'
-        } else {
-          const projName = selectedTenantId.slice(5)
-          tenantIds = tenants.filter(t => t.project === projName).map(t => t.id).join(',')
-        }
-        let done = 0
-        for (const file of files) {
-          await uploadBulk(file, tenantIds)
-          done++
-          setProgress(`מעלה... ${done}/${files.length}`)
+          setProgress(`מעלה... ${done}/${total}`)
         }
       }
       setFiles([]); setCaption(''); setProgress('')
-      if (viewTenantId) {
-        if (viewTenantId === 'all') api.get('/tenant-docs/all').then((r) => setDocs(r.data))
-        else api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
-      }
+      if (viewTenantId) api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
     } catch (err) {
       setUploadError(err.response?.data?.detail || 'שגיאה בהעלאת הקובץ')
     } finally { setSaving(false) }
@@ -1553,27 +1536,6 @@ function PlansManager() {
     if (!confirm('למחוק?')) return
     await api.delete(`/tenant-docs/${id}`)
     api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
-  }
-
-  async function delFromAll(filename) {
-    if (!confirm('למחוק קובץ זה אצל כל הדיירים?')) return
-    await api.delete(`/tenant-docs/by-filename/${encodeURIComponent(filename)}`)
-    api.get('/tenant-docs/all').then((r) => setDocs(r.data))
-  }
-
-  async function delSelectedFromAll(filenames) {
-    if (!confirm(`למחוק ${filenames.length} קבצים אצל כל הדיירים?`)) return
-    for (const fn of filenames) {
-      await api.delete(`/tenant-docs/by-filename/${encodeURIComponent(fn)}`)
-    }
-    setSelectedFilenames([])
-    api.get('/tenant-docs/all').then((r) => setDocs(r.data))
-  }
-
-  function toggleSelectFilename(url) {
-    setSelectedFilenames((prev) =>
-      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
-    )
   }
 
   const inp = 'border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-full'
@@ -1642,7 +1604,6 @@ function PlansManager() {
         <label className="block text-sm font-medium text-gray-700 mb-2">צפה בקבצים של דייר</label>
         <select value={viewTenantId} onChange={(e) => setViewTenantId(e.target.value)} className={inp}>
           <option value="">— בחר דייר לצפייה —</option>
-          <option value="all">📋 כל הדיירים</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>{t.name} ({t.phone})</option>
           ))}
@@ -1651,53 +1612,25 @@ function PlansManager() {
         {viewTenantId && (
           <div className="mt-4">
             {docs.length === 0 ? (
-              <p className="text-center text-gray-400 text-sm py-4">אין קבצים</p>
-            ) : (() => {
-              const displayDocs = viewTenantId === 'all'
-                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.filename]) acc[d.filename] = d; return acc }, {}))
-                : docs
-              return (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-gray-500">{displayDocs.length} קבצים</p>
-                    {viewTenantId === 'all' && (
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setSelectedFilenames(selectedFilenames.length === displayDocs.length ? [] : displayDocs.map((d) => d.filename))}
-                          className="text-xs text-blue-600 hover:underline">
-                          {selectedFilenames.length === displayDocs.length ? 'בטל הכל' : 'בחר הכל'}
-                        </button>
-                        {selectedFilenames.length > 0 && (
-                          <button onClick={() => delSelectedFromAll(selectedFilenames)}
-                            className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-lg font-medium">
-                            🗑️ מחק {selectedFilenames.length} נבחרים
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {displayDocs.map((doc) => (
-                    <div key={doc.id} className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selectedFilenames.includes(doc.filename) ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
-                      {viewTenantId === 'all' && (
-                        <input type="checkbox" checked={selectedFilenames.includes(doc.filename)}
-                          onChange={() => toggleSelectFilename(doc.filename)}
-                          className="w-4 h-4 accent-red-500 flex-shrink-0 cursor-pointer" />
-                      )}
-                      <span className="text-2xl flex-shrink-0">📄</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
-                        {doc.caption && <p className="text-xs text-gray-400 truncate">{doc.filename}</p>}
-                      </div>
-                      <a href={doc.url} target="_blank" rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>
-                      {viewTenantId === 'all'
-                        ? <button onClick={() => delFromAll(doc.filename)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק מכולם</button>
-                        : <button onClick={() => del(doc.id)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק</button>
-                      }
+              <p className="text-center text-gray-400 text-sm py-4">אין קבצים לדייר זה</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 mb-2">{docs.length} קבצים</p>
+                {docs.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                    <span className="text-2xl flex-shrink-0">📄</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
+                      {doc.caption && <p className="text-xs text-gray-400 truncate">{doc.filename}</p>}
                     </div>
-                  ))}
-                </div>
-              )
-            })()}
+                    <a href={doc.url} target="_blank" rel="noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>
+                    <button onClick={() => del(doc.id)}
+                      className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
