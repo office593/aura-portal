@@ -1497,33 +1497,51 @@ function PlansManager() {
     await api.post('/tenant-docs/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   }
 
+  async function uploadBulk(file, tenantIds) {
+    const cleanName = sanitizeFileName(file.name) || `file_${Date.now()}.pdf`
+    const renamedFile = new File([file], cleanName, { type: file.type })
+    const fd = new FormData()
+    fd.append('tenant_ids', tenantIds)
+    fd.append('file', renamedFile)
+    if (caption) fd.append('caption', caption)
+    await api.post('/tenant-docs/upload-bulk', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  }
+
   async function handleUpload(e) {
     e.preventDefault()
     if (!files.length) return
-    let targetTenants
-    if (selectedTenantId === 'all') {
-      targetTenants = tenants
-    } else if (String(selectedTenantId).startsWith('proj:')) {
-      const projName = selectedTenantId.slice(5)
-      targetTenants = tenants.filter(t => t.project === projName)
-    } else {
-      targetTenants = tenants.filter(t => String(t.id) === selectedTenantId)
-    }
-    if (!targetTenants.length) return
-    const isPersonal = !selectedTenantId.startsWith('proj:') && selectedTenantId !== 'all'
     setSaving(true); setUploadError(''); setProgress('')
     try {
-      let done = 0
-      const total = files.length * targetTenants.length
-      for (const tenant of targetTenants) {
+      const isSingle = !String(selectedTenantId).startsWith('proj:') && selectedTenantId !== 'all'
+      if (isSingle) {
+        // דייר בודד — upload רגיל
+        let done = 0
         for (const file of files) {
-          await uploadToTenant(tenant.id, file, isPersonal)
+          await uploadToTenant(selectedTenantId, file, true)
           done++
-          setProgress(`מעלה... ${done}/${total}`)
+          setProgress(`מעלה... ${done}/${files.length}`)
+        }
+      } else {
+        // כל הדיירים / פרויקט — bulk upload (קובץ פיזי אחד, הרבה רשומות)
+        let tenantIds
+        if (selectedTenantId === 'all') {
+          tenantIds = 'all'
+        } else {
+          const projName = selectedTenantId.slice(5)
+          tenantIds = tenants.filter(t => t.project === projName).map(t => t.id).join(',')
+        }
+        let done = 0
+        for (const file of files) {
+          await uploadBulk(file, tenantIds)
+          done++
+          setProgress(`מעלה... ${done}/${files.length}`)
         }
       }
       setFiles([]); setCaption(''); setProgress('')
-      if (viewTenantId) api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+      if (viewTenantId) {
+        if (viewTenantId === 'all') api.get('/tenant-docs/all').then((r) => setDocs(r.data))
+        else api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+      }
     } catch (err) {
       setUploadError(err.response?.data?.detail || 'שגיאה בהעלאת הקובץ')
     } finally { setSaving(false) }
