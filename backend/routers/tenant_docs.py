@@ -94,6 +94,15 @@ async def upload_doc(
     return doc_to_dict(doc)
 
 
+@router.delete("/by-filename/{filename}", dependencies=[Depends(require_admin)])
+def delete_by_filename(filename: str, db: Session = Depends(get_db)):
+    docs = db.query(models.TenantDocument).filter(models.TenantDocument.url.contains(filename)).all()
+    for doc in docs:
+        db.delete(doc)
+    db.commit()
+    return {"deleted": len(docs)}
+
+
 @router.delete("/{doc_id}", dependencies=[Depends(require_admin)])
 def delete_doc(doc_id: int, db: Session = Depends(get_db)):
     doc = db.query(models.TenantDocument).filter(models.TenantDocument.id == doc_id).first()

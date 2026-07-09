@@ -1531,11 +1531,14 @@ function PlansManager() {
   async function del(id) {
     if (!confirm('למחוק?')) return
     await api.delete(`/tenant-docs/${id}`)
-    if (viewTenantId === 'all') {
-      api.get('/tenant-docs/all').then((r) => setDocs(r.data))
-    } else {
-      api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
-    }
+    api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+  }
+
+  async function delFromAll(filename) {
+    if (!confirm('למחוק קובץ זה אצל כל הדיירים?')) return
+    const serverFilename = filename.split('/').pop()
+    await api.delete(`/tenant-docs/by-filename/${serverFilename}`)
+    api.get('/tenant-docs/all').then((r) => setDocs(r.data))
   }
 
   const inp = 'border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-full'
@@ -1613,26 +1616,32 @@ function PlansManager() {
         {viewTenantId && (
           <div className="mt-4">
             {docs.length === 0 ? (
-              <p className="text-center text-gray-400 text-sm py-4">אין קבצים לדייר זה</p>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500 mb-2">{docs.length} קבצים</p>
-                {docs.map((doc) => (
-                  <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                    <span className="text-2xl flex-shrink-0">📄</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
-                      {doc.caption && <p className="text-xs text-gray-400 truncate">{doc.filename}</p>}
-                      {doc.tenant_name && viewTenantId === 'all' && <p className="text-xs text-blue-500">{doc.tenant_name}</p>}
+              <p className="text-center text-gray-400 text-sm py-4">אין קבצים</p>
+            ) : (() => {
+              const displayDocs = viewTenantId === 'all'
+                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.url]) acc[d.url] = d; return acc }, {}))
+                : docs
+              return (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500 mb-2">{displayDocs.length} קבצים{viewTenantId === 'all' ? ' ייחודיים' : ''}</p>
+                  {displayDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                      <span className="text-2xl flex-shrink-0">📄</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
+                        {doc.caption && <p className="text-xs text-gray-400 truncate">{doc.filename}</p>}
+                      </div>
+                      <a href={doc.url} target="_blank" rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>
+                      {viewTenantId === 'all'
+                        ? <button onClick={() => delFromAll(doc.url)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק מכולם</button>
+                        : <button onClick={() => del(doc.id)} className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק</button>
+                      }
                     </div>
-                    <a href={doc.url} target="_blank" rel="noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>
-                    <button onClick={() => del(doc.id)}
-                      className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 flex-shrink-0">מחק</button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
       </div>
