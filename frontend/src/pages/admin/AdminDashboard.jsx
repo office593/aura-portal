@@ -1458,7 +1458,11 @@ function PlansManager() {
 
   useEffect(() => {
     if (!viewTenantId) { setDocs([]); return }
-    api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+    if (viewTenantId === 'all') {
+      api.get('/tenant-docs/all').then((r) => setDocs(r.data))
+    } else {
+      api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+    }
   }, [viewTenantId])
 
   function sanitizeFileName(name) {
@@ -1527,7 +1531,11 @@ function PlansManager() {
   async function del(id) {
     if (!confirm('למחוק?')) return
     await api.delete(`/tenant-docs/${id}`)
-    api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+    if (viewTenantId === 'all') {
+      api.get('/tenant-docs/all').then((r) => setDocs(r.data))
+    } else {
+      api.get(`/tenant-docs/by-tenant/${viewTenantId}`).then((r) => setDocs(r.data))
+    }
   }
 
   const inp = 'border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-full'
@@ -1596,6 +1604,7 @@ function PlansManager() {
         <label className="block text-sm font-medium text-gray-700 mb-2">צפה בקבצים של דייר</label>
         <select value={viewTenantId} onChange={(e) => setViewTenantId(e.target.value)} className={inp}>
           <option value="">— בחר דייר לצפייה —</option>
+          <option value="all">📋 כל הדיירים</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>{t.name} ({t.phone})</option>
           ))}
@@ -1614,6 +1623,7 @@ function PlansManager() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
                       {doc.caption && <p className="text-xs text-gray-400 truncate">{doc.filename}</p>}
+                      {doc.tenant_name && viewTenantId === 'all' && <p className="text-xs text-blue-500">{doc.tenant_name}</p>}
                     </div>
                     <a href={doc.url} target="_blank" rel="noreferrer"
                       className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded-lg hover:bg-blue-50 flex-shrink-0">פתח</a>

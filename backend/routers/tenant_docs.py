@@ -40,6 +40,19 @@ def get_my_docs(
     return [doc_to_dict(d) for d in docs]
 
 
+@router.get("/all", dependencies=[Depends(require_admin)])
+def get_all_docs(db: Session = Depends(get_db)):
+    docs = db.query(models.TenantDocument).order_by(models.TenantDocument.created_at.desc()).all()
+    from models import Tenant
+    tenant_map = {t.id: t.name for t in db.query(Tenant).all()}
+    result = []
+    for d in docs:
+        item = doc_to_dict(d)
+        item["tenant_name"] = tenant_map.get(d.tenant_id, "")
+        result.append(item)
+    return result
+
+
 @router.get("/by-tenant/{tenant_id}", dependencies=[Depends(require_admin)])
 def get_tenant_docs(tenant_id: int, db: Session = Depends(get_db)):
     docs = (
