@@ -943,6 +943,7 @@ function TenantsManager() {
   const [cropRect, setCropRect] = useState(null)   // {x,y,w,h} in image %
   const cropImgRef = useRef(null)
   const cropDragRef = useRef(null)
+  const localImgInputRef = useRef(null)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState(null)
   const [deletingAll, setDeletingAll] = useState(false)
@@ -1191,6 +1192,15 @@ function TenantsManager() {
     </div>}
 
     <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <input ref={localImgInputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => {
+          const file = e.target.files[0]
+          if (!file) return
+          const blobUrl = URL.createObjectURL(file)
+          setCropRect(null)
+          setCropModal({ tenantId: localImgInputRef.current._tenantId, name: localImgInputRef.current._tenantName, imgUrl: blobUrl })
+        }} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -1291,7 +1301,13 @@ function TenantsManager() {
                         load()
                       }} className="text-gray-400 hover:text-red-500 text-xs" title="הסר תמונה">🗑️ תמונה</button>
                     )}
-                    {t.id_image_url && (<>
+                    <button onClick={() => {
+                      localImgInputRef.current._tenantId = t.id
+                      localImgInputRef.current._tenantName = t.name
+                      localImgInputRef.current.value = ''
+                      localImgInputRef.current.click()
+                    }} className="text-orange-500 hover:text-orange-700 text-xs">✂️ העלה וחתוך</button>
+                    {t.id_image_url && (
                       <button onClick={async () => {
                         try {
                           const res = await api.post(`/tenants/${t.id}/extract-avatar`)
@@ -1302,15 +1318,7 @@ function TenantsManager() {
                           load()
                         } catch { alert('שגיאה בחילוץ תמונה') }
                       }} className="text-purple-500 hover:text-purple-700 text-xs">📸 חלץ פנים</button>
-                      <button onClick={async () => {
-                        try {
-                          const resp = await api.get(`/tenants/${t.id}/id-card-image`, { responseType: 'blob' })
-                          const blobUrl = URL.createObjectURL(resp.data)
-                          setCropRect(null)
-                          setCropModal({ tenantId: t.id, name: t.name, imgUrl: blobUrl })
-                        } catch { alert('שגיאה בטעינת תעודת זהות') }
-                      }} className="text-orange-500 hover:text-orange-700 text-xs">✂️ חתוך</button>
-                    </>)}
+                    )}
                     {t.is_admin && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">אדמין</span>}
                   </div>
                 </td>
