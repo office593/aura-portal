@@ -151,6 +151,8 @@ function StagesManager() {
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_STAGE)
   const [saving, setSaving] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [newForm, setNewForm] = useState({ name: '', category: CATEGORY_ORDER[0], status: 'pending', completion_pct: 0, target_date: '', description: '' })
 
   async function load() {
     const r = await api.get('/project/stages')
@@ -192,6 +194,17 @@ function StagesManager() {
   async function quickUpdate(id, field, value) {
     await api.put(`/project/stages/${id}`, { [field]: field === 'completion_pct' ? Number(value) : value })
     load()
+  }
+
+  async function addStage() {
+    if (!newForm.name.trim()) return alert('יש להזין שם שלב')
+    setSaving(true)
+    try {
+      await api.post('/project/stages', { ...newForm, completion_pct: Number(newForm.completion_pct), order: stages.length + 1 })
+      setNewForm({ name: '', category: CATEGORY_ORDER[0], status: 'pending', completion_pct: 0, target_date: '', description: '' })
+      setShowAdd(false)
+      load()
+    } finally { setSaving(false) }
   }
 
   const statusOptions = ['pending', 'active', 'completed']
@@ -295,6 +308,43 @@ function StagesManager() {
 
   return (
     <div className="space-y-6 mb-6">
+      {/* Add stage */}
+      <div className="bg-white rounded-2xl shadow-sm p-4">
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-500 text-sm font-medium transition-colors">
+            + הוסף שלב חדש
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="font-semibold text-gray-700 text-sm">שלב חדש</p>
+            <input value={newForm.name} onChange={e => setNewForm({...newForm, name: e.target.value})} placeholder="שם השלב *" className={inp} />
+            <textarea value={newForm.description} onChange={e => setNewForm({...newForm, description: e.target.value})} placeholder="תיאור (אופציונלי)" rows={2} className={`${inp} resize-none`} />
+            <div className="grid grid-cols-2 gap-3">
+              <select value={newForm.category} onChange={e => setNewForm({...newForm, category: e.target.value})} className={inp}>
+                {CATEGORY_ORDER.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="">ללא קטגוריה</option>
+              </select>
+              <select value={newForm.status} onChange={e => setNewForm({...newForm, status: e.target.value})} className={inp}>
+                <option value="pending">טרם התחיל</option>
+                <option value="active">בביצוע</option>
+                <option value="completed">הושלם</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-1">
+                <input type="number" min={0} max={100} value={newForm.completion_pct} onChange={e => setNewForm({...newForm, completion_pct: e.target.value})} className={inp} />
+                <span className="text-sm text-gray-500 shrink-0">%</span>
+              </div>
+              <input type="date" value={newForm.target_date} onChange={e => setNewForm({...newForm, target_date: e.target.value})} className={inp} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={addStage} disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'שומר...' : '+ הוסף'}</button>
+              <button onClick={() => setShowAdd(false)} className="px-4 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">ביטול</button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {grouped.map(({ cat, items }) => {
         const catPct = Math.round(items.reduce((a, s) => a + s.completion_pct, 0) / items.length)
         const colorClass = CATEGORY_COLORS[cat] || 'bg-gray-600'
