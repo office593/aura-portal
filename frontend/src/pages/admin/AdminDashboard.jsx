@@ -28,6 +28,17 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
   }, [file])
 
   useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => {
+      canvas.removeEventListener('touchstart', onTouchStart)
+      canvas.removeEventListener('touchmove', onTouchMove)
+    }
+  }, [dragging])
+
+  useEffect(() => {
     if (!img || !canvasRef.current) return
     const ctx = canvasRef.current.getContext('2d')
     ctx.clearRect(0, 0, SIZE, SIZE)
@@ -54,12 +65,14 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
   function onMouseUp() { setDragging(false) }
 
   function onTouchStart(e) {
+    e.preventDefault()
     const t = e.touches[0]
     setDragging(true)
     dragStart.current = { mx: t.clientX, my: t.clientY, px: pos.x, py: pos.y }
   }
 
   function onTouchMove(e) {
+    e.preventDefault()
     if (!dragging || !dragStart.current) return
     const t = e.touches[0]
     const dx = t.clientX - dragStart.current.mx
@@ -87,7 +100,7 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
             ref={canvasRef}
             width={SIZE} height={SIZE}
             className="rounded-full border-4 border-blue-200 cursor-grab active:cursor-grabbing"
-            style={{ touchAction: 'none' }}
+            style={{ touchAction: 'none', userSelect: 'none' }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -95,6 +108,7 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onMouseUp}
+            onTouchCancel={onMouseUp}
           />
         </div>
         {/* Arrow buttons */}
