@@ -284,13 +284,12 @@ def extract_avatar_from_id(tenant_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="אין קובץ תעודת זהות לדייר זה")
 
     try:
-        import truststore
-        truststore.inject_into_ssl()
-        import requests as _req, fitz, cv2, numpy as np
+        import re, httpx
+        from PIL import Image
+        import io
 
         file_id = None
         for pattern in [r'/d/([a-zA-Z0-9_-]+)/preview', r'id=([a-zA-Z0-9_-]+)']:
-            import re
             m = re.search(pattern, tenant.id_image_url)
             if m:
                 file_id = m.group(1)
@@ -298,27 +297,34 @@ def extract_avatar_from_id(tenant_id: int, db: Session = Depends(get_db)):
         if not file_id:
             raise HTTPException(status_code=400, detail="לא ניתן לחלץ file_id מהURL")
 
-        resp = _req.get(f"https://drive.google.com/uc?export=download&id={file_id}", timeout=30)
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        resp = httpx.get(url, timeout=20, follow_redirects=True)
         if resp.status_code != 200:
             raise HTTPException(status_code=400, detail="שגיאה בהורדת הקובץ מDrive")
 
-        doc = fitz.open(stream=resp.content, filetype="pdf")
-        pix = doc[0].get_pixmap(matrix=fitz.Matrix(3, 3))
-        img_array = np.frombuffer(pix.tobytes("png"), np.uint8)
-        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-        h, w = img.shape[:2]
+        content_type = resp.headers.get("content-type", "")
+        if "pdf" in content_type or resp.content[:4] == b'%PDF':
+            import fitz
+            doc = fitz.open(stream=resp.content, filetype="pdf")
+            pix = doc[0].get_pixmap(matrix=fitz.Matrix(2, 2))
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+        else:
+            img = Image.open(io.BytesIO(resp.content)).convert("RGB")
 
+        w, h = img.size
         # חיתוך קבוע — פנים בתעודה ביומטרית ישראלית
         x1, y1 = int(w * 0.36), int(h * 0.13)
         x2, y2 = int(w * 0.60), int(h * 0.40)
-        crop = img[y1:y2, x1:x2]
-        side = min(crop.shape[:2])
-        cx, cy = crop.shape[1] // 2, crop.shape[0] // 2
-        square = crop[cy-side//2:cy+side//2, cx-side//2:cx+side//2]
-        square = cv2.resize(square, (300, 300))
+        crop = img.crop((x1, y1, x2, y2))
+        side = min(crop.size)
+        cx, cy = crop.width // 2, crop.height // 2
+        square = crop.crop((cx - side//2, cy - side//2, cx + side//2, cy + side//2))
+        square = square.resize((300, 300), Image.LANCZOS)
 
         filename = f"avatar_{uuid.uuid4().hex}.jpg"
-        (UPLOADS_DIR / filename).write_bytes(cv2.imencode('.jpg', square)[1].tobytes())
+        buf = io.BytesIO()
+        square.save(buf, format="JPEG", quality=88)
+        (UPLOADS_DIR / filename).write_bytes(buf.getvalue())
         tenant.avatar_url = f"/uploads/{filename}"
         db.commit()
         return tenant_to_dict(tenant)
