@@ -954,6 +954,7 @@ function TenantsManager() {
   const cropImgRef = useRef(null)
   const cropDragRef = useRef(null)
   const localImgInputRef = useRef(null)
+  const [localCropFile, setLocalCropFile] = useState(null) // {file, tenantId, name}
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState(null)
   const [deletingAll, setDeletingAll] = useState(false)
@@ -1206,10 +1207,21 @@ function TenantsManager() {
         onChange={e => {
           const file = e.target.files[0]
           if (!file) return
-          const blobUrl = URL.createObjectURL(file)
-          setCropRect(null)
-          setCropModal({ tenantId: localImgInputRef.current._tenantId, name: localImgInputRef.current._tenantName, imgUrl: blobUrl })
+          setLocalCropFile({ file, tenantId: localImgInputRef.current._tenantId, name: localImgInputRef.current._tenantName })
         }} />
+      {localCropFile && (
+        <AvatarCropper
+          file={localCropFile.file}
+          onConfirm={async (blob) => {
+            const fd = new FormData()
+            fd.append('file', blob, 'avatar.jpg')
+            await api.post(`/tenants/${localCropFile.tenantId}/avatar`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+            setLocalCropFile(null)
+            load()
+          }}
+          onCancel={() => setLocalCropFile(null)}
+        />
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
