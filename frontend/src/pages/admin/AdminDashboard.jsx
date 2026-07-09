@@ -1444,6 +1444,7 @@ function PlansManager() {
   const [selectedTenantId, setSelectedTenantId] = useState('all')
   const [docs, setDocs] = useState([])
   const [viewTenantId, setViewTenantId] = useState('')
+  const [selectedFilenames, setSelectedFilenames] = useState([])
   const [files, setFiles] = useState([]) // multiple files
   const [caption, setCaption] = useState('')
   const [saving, setSaving] = useState(false)
@@ -1541,6 +1542,22 @@ function PlansManager() {
     api.get('/tenant-docs/all').then((r) => setDocs(r.data))
   }
 
+  async function delSelectedFromAll(filenames) {
+    if (!confirm(`למחוק ${filenames.length} קבצים אצל כל הדיירים?`)) return
+    for (const fn of filenames) {
+      const serverFilename = fn.split('/').pop()
+      await api.delete(`/tenant-docs/by-filename/${serverFilename}`)
+    }
+    setSelectedFilenames([])
+    api.get('/tenant-docs/all').then((r) => setDocs(r.data))
+  }
+
+  function toggleSelectFilename(url) {
+    setSelectedFilenames((prev) =>
+      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
+    )
+  }
+
   const inp = 'border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-full'
 
   return (
@@ -1623,9 +1640,30 @@ function PlansManager() {
                 : docs
               return (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-500 mb-2">{displayDocs.length} קבצים</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-gray-500">{displayDocs.length} קבצים</p>
+                    {viewTenantId === 'all' && (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setSelectedFilenames(selectedFilenames.length === displayDocs.length ? [] : displayDocs.map((d) => d.url))}
+                          className="text-xs text-blue-600 hover:underline">
+                          {selectedFilenames.length === displayDocs.length ? 'בטל הכל' : 'בחר הכל'}
+                        </button>
+                        {selectedFilenames.length > 0 && (
+                          <button onClick={() => delSelectedFromAll(selectedFilenames)}
+                            className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-lg font-medium">
+                            🗑️ מחק {selectedFilenames.length} נבחרים
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {displayDocs.map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                    <div key={doc.id} className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selectedFilenames.includes(doc.url) ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+                      {viewTenantId === 'all' && (
+                        <input type="checkbox" checked={selectedFilenames.includes(doc.url)}
+                          onChange={() => toggleSelectFilename(doc.url)}
+                          className="w-4 h-4 accent-red-500 flex-shrink-0 cursor-pointer" />
+                      )}
                       <span className="text-2xl flex-shrink-0">📄</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">{doc.caption || doc.filename}</p>
