@@ -1619,7 +1619,7 @@ function PlansManager() {
               <p className="text-center text-gray-400 text-sm py-4">אין קבצים</p>
             ) : (() => {
               const displayDocs = viewTenantId === 'all'
-                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.url]) acc[d.url] = d; return acc }, {}))
+                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.filename]) acc[d.filename] = d; return acc }, {}))
                 : docs
               return (
                 <div className="space-y-2">
