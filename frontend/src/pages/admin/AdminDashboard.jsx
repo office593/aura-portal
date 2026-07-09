@@ -1498,11 +1498,13 @@ function PlansManager() {
   }
 
   async function uploadBulk(file, tenantIds) {
+    const originalName = file.name
     const cleanName = sanitizeFileName(file.name) || `file_${Date.now()}.pdf`
     const renamedFile = new File([file], cleanName, { type: file.type })
     const fd = new FormData()
     fd.append('tenant_ids', tenantIds)
     fd.append('file', renamedFile)
+    fd.append('original_filename', originalName)
     if (caption) fd.append('caption', caption)
     await api.post('/tenant-docs/upload-bulk', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   }

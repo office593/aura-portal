@@ -68,16 +68,18 @@ def get_tenant_docs(tenant_id: int, db: Session = Depends(get_db)):
 async def upload_bulk(
     tenant_ids: str = Form(...),  # comma-separated list of tenant IDs, or "all"
     file: UploadFile = File(...),
+    original_filename: Optional[str] = Form(None),
     caption: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
-    suffix = Path(file.filename).suffix.lower()
+    suffix = Path(file.filename).suffix.lower() or ".pdf"
     if suffix not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="יש לבחור קובץ PDF בלבד")
     contents = await file.read()
     server_filename = f"doc_{uuid.uuid4().hex}{suffix}"
     (UPLOADS_DIR / server_filename).write_bytes(contents)
     url = f"/uploads/{server_filename}"
+    display_name = original_filename or file.filename
 
     if tenant_ids == "all":
         from models import Tenant
@@ -89,7 +91,7 @@ async def upload_bulk(
     for tid in ids:
         doc = models.TenantDocument(
             tenant_id=tid,
-            filename=file.filename,
+            filename=display_name,
             url=url,
             caption=caption,
             is_personal=False,
