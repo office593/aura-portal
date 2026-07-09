@@ -1618,12 +1618,10 @@ function PlansManager() {
             {docs.length === 0 ? (
               <p className="text-center text-gray-400 text-sm py-4">אין קבצים</p>
             ) : (() => {
-              const displayDocs = viewTenantId === 'all'
-                ? Object.values(docs.reduce((acc, d) => { if (!acc[d.url]) acc[d.url] = d; return acc }, {}))
-                : docs
+              const displayDocs = docs
               return (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-500 mb-2">{displayDocs.length} קבצים{viewTenantId === 'all' ? ' ייחודיים' : ''}</p>
+                  <p className="text-sm text-gray-500 mb-2">{displayDocs.length} קבצים</p>
                   {displayDocs.map((doc) => (
                     <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                       <span className="text-2xl flex-shrink-0">📄</span>
