@@ -97,7 +97,17 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
             onTouchEnd={onMouseUp}
           />
         </div>
-        <div className="mb-4">
+        {/* Arrow buttons */}
+        <div className="flex flex-col items-center gap-1 mb-3">
+          <button onClick={() => setPos(p => ({...p, y: p.y + 10}))} className="w-9 h-9 rounded-lg border text-gray-600 hover:bg-gray-100 text-lg">↑</button>
+          <div className="flex gap-1">
+            <button onClick={() => setPos(p => ({...p, x: p.x + 10}))} className="w-9 h-9 rounded-lg border text-gray-600 hover:bg-gray-100 text-lg">←</button>
+            <div className="w-9 h-9" />
+            <button onClick={() => setPos(p => ({...p, x: p.x - 10}))} className="w-9 h-9 rounded-lg border text-gray-600 hover:bg-gray-100 text-lg">→</button>
+          </div>
+          <button onClick={() => setPos(p => ({...p, y: p.y - 10}))} className="w-9 h-9 rounded-lg border text-gray-600 hover:bg-gray-100 text-lg">↓</button>
+        </div>
+        <div className="mb-3">
           <label className="text-xs text-gray-500 block mb-1 text-center">זום</label>
           <input type="range" min="0.5" max="3" step="0.05"
             value={scale}
@@ -105,7 +115,7 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
             className="w-full accent-blue-500" />
         </div>
         <div className="flex gap-2">
-          <button onClick={confirm} className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium">אישור</button>
+          <button onClick={confirm} className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium">✓ אישור</button>
           <button onClick={onCancel} className="border px-4 rounded-xl text-sm text-gray-500">ביטול</button>
         </div>
       </div>
