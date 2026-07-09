@@ -69,25 +69,6 @@ export default function PersonalArea() {
 
 
 
-      {/* ID Card */}
-      {profile?.id_image_url && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 mt-6">
-          <h3 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
-            <span>📄</span> תעודת זהות
-          </h3>
-          {profile.id_image_url.includes('/preview') ? (
-            <iframe
-              src={profile.id_image_url}
-              className="w-full rounded-xl border border-gray-100"
-              style={{height: '500px'}}
-              allow="autoplay"
-            />
-          ) : (
-            <img src={profile.id_image_url} alt="תעודת זהות"
-              className="w-full rounded-xl border border-gray-100" />
-          )}
-        </div>
-      )}
 
       {/* Documents */}
       {docs.filter(d => d.is_personal).length > 0 && (
