@@ -7,8 +7,7 @@ from typing import Optional
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
-
-UPLOADS_DIR = Path("uploads")
+from storage import save_file
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
@@ -96,8 +95,7 @@ async def upload_avatar(contact_id: int, file: UploadFile = File(...), db: Sessi
     suffix = Path(file.filename).suffix.lower()
     contents = await file.read()
     filename = f"pro_{uuid.uuid4().hex}{suffix}"
-    (UPLOADS_DIR / filename).write_bytes(contents)
-    c.avatar_url = f"/uploads/{filename}"
+    c.avatar_url = save_file(contents, filename, content_type=file.content_type)
     db.commit()
     return contact_to_dict(c)
 

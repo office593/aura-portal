@@ -10,8 +10,8 @@ from typing import Optional
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
+from storage import save_file
 
-UPLOADS_DIR = Path("uploads")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 MAX_SIZE_BYTES = 10 * 1024 * 1024
 
@@ -131,8 +131,7 @@ async def upload_avatar(tenant_id: int, file: UploadFile = File(...), db: Sessio
     if len(contents) > MAX_SIZE_BYTES:
         raise HTTPException(status_code=400, detail="הקובץ גדול מדי. מקסימום 10MB.")
     filename = f"avatar_{uuid.uuid4().hex}{suffix}"
-    (UPLOADS_DIR / filename).write_bytes(contents)
-    tenant.avatar_url = f"/uploads/{filename}"
+    tenant.avatar_url = save_file(contents, filename, content_type=file.content_type)
     db.commit()
     return tenant_to_dict(tenant)
 
@@ -324,8 +323,7 @@ def extract_avatar_from_id(tenant_id: int, db: Session = Depends(get_db)):
         filename = f"avatar_{uuid.uuid4().hex}.jpg"
         buf = io.BytesIO()
         square.save(buf, format="JPEG", quality=88)
-        (UPLOADS_DIR / filename).write_bytes(buf.getvalue())
-        tenant.avatar_url = f"/uploads/{filename}"
+        tenant.avatar_url = save_file(buf.getvalue(), filename, content_type="image/jpeg")
         db.commit()
         return tenant_to_dict(tenant)
     except HTTPException:

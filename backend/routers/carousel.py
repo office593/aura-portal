@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
+from storage import save_file
 
 router = APIRouter(prefix="/carousel", tags=["carousel"])
 
-UPLOADS_DIR = Path("uploads")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_IMAGES = 3
 
@@ -29,9 +29,9 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
         raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך")
     contents = await file.read()
     filename = f"carousel_{uuid.uuid4().hex}{suffix}"
-    (UPLOADS_DIR / filename).write_bytes(contents)
+    url = save_file(contents, filename, content_type=file.content_type)
     order = count
-    img = models.CarouselImage(url=f"/uploads/{filename}", order=order)
+    img = models.CarouselImage(url=url, order=order)
     db.add(img)
     db.commit()
     db.refresh(img)

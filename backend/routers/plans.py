@@ -6,10 +6,10 @@ from typing import Optional
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
+from storage import save_file
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
-UPLOADS_DIR = Path("uploads")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 MAX_SIZE_BYTES = 10 * 1024 * 1024
 
@@ -33,8 +33,8 @@ async def upload_plan(
     if len(contents) > MAX_SIZE_BYTES:
         raise HTTPException(status_code=400, detail="הקובץ גדול מדי. מקסימום 10 מגה-בייט.")
     filename = f"{uuid.uuid4().hex}{suffix}"
-    (UPLOADS_DIR / filename).write_bytes(contents)
-    item = models.PlanFile(url=f"/uploads/{filename}", caption=caption)
+    url = save_file(contents, filename, content_type=file.content_type)
+    item = models.PlanFile(url=url, caption=caption)
     db.add(item)
     db.commit()
     db.refresh(item)

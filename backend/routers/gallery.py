@@ -8,10 +8,10 @@ from typing import Optional
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
+from storage import save_file
 
 router = APIRouter(prefix="/gallery", tags=["gallery"])
 
-UPLOADS_DIR = Path("uploads")
 ALLOWED_TYPES = {"image/jpeg", "image/jpg", "image/png"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -78,10 +78,8 @@ async def upload_image(
 
     # Save file with unique name
     filename = f"{uuid.uuid4().hex}{suffix}"
-    file_path = UPLOADS_DIR / filename
-    file_path.write_bytes(contents)
+    url = save_file(contents, filename, content_type=file.content_type)
 
-    url = f"/uploads/{filename}"
     item = models.GalleryItem(
         url=url,
         media_type="image",

@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
-import os, uuid, shutil
+import os, uuid
 from database import get_db
 import models
 from auth_utils import get_current_tenant, require_admin
+from storage import save_file
 
 router = APIRouter(prefix="/about", tags=["about"])
 
@@ -117,10 +118,8 @@ def update_company(data: CompanyInfoUpdate, db: Session = Depends(get_db)):
 async def upload_founder_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
     ext = os.path.splitext(file.filename)[1].lower()
     fname = f"founder_{uuid.uuid4().hex}{ext}"
-    os.makedirs("uploads", exist_ok=True)
-    with open(f"uploads/{fname}", "wb") as f:
-        shutil.copyfileobj(file.file, f)
-    url = f"/uploads/{fname}"
+    contents = await file.read()
+    url = save_file(contents, fname, content_type=file.content_type)
     info = db.query(models.CompanyInfo).first()
     if not info:
         info = models.CompanyInfo(founder_image_url=url)
