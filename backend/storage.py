@@ -8,6 +8,7 @@ disk storage under uploads/ when S3_BUCKET_NAME is not set, e.g. for local dev):
 """
 import os
 from pathlib import Path
+from typing import Optional
 
 UPLOADS_DIR = Path("uploads")
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -21,7 +22,7 @@ if S3_BUCKET:
     _s3_client = boto3.client("s3", region_name=S3_REGION)
 
 
-def save_file(contents: bytes, filename: str, content_type: str | None = None) -> str:
+def save_file(contents: bytes, filename: str, content_type: Optional[str] = None) -> str:
     """Saves file contents and returns the URL to serve it from."""
     if _s3_client:
         extra_args = {"ContentType": content_type} if content_type else {}
