@@ -140,6 +140,7 @@ function AvatarCropper({ file, onConfirm, onCancel }) {
 /* ─── Stages management ─── */
 const EMPTY_STAGE = { name: '', status: 'pending', completion_pct: 0, target_date: '', description: '' }
 const CATEGORY_ORDER = ['תב"ע', 'תכנית עיצוב אדריכלי', 'היתר בנייה']
+const CATEGORY_WEIGHTS = { 'תב"ע': 55, 'תכנית עיצוב אדריכלי': 20, 'היתר בנייה': 25 }
 const CATEGORY_COLORS = {
   'תב"ע': 'bg-purple-600',
   'תכנית עיצוב אדריכלי': 'bg-blue-600',
@@ -334,7 +335,7 @@ function StagesManager() {
             <div className={`${colorClass} px-6 py-4 flex items-center justify-between`}>
               <h3 className="text-white font-bold text-base">{cat}</h3>
               <span className="text-white text-sm opacity-90 bg-white/20 px-3 py-1 rounded-full">
-                {catPct}% הושלם
+                {catPct}% הושלם <span className="opacity-70 text-xs">(משקל {CATEGORY_WEIGHTS[cat]}%)</span>
               </span>
             </div>
             {/* Progress bar */}

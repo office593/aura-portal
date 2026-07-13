@@ -50,6 +50,12 @@ def get_stages(
     ]
 
 
+CATEGORY_WEIGHTS = {
+    'תב"ע': 0.55,
+    'תכנית עיצוב אדריכלי': 0.20,
+    'היתר בנייה': 0.25,
+}
+
 @router.get("/overall")
 def get_overall(
     db: Session = Depends(get_db),
@@ -58,8 +64,21 @@ def get_overall(
     stages = db.query(models.ProjectStage).all()
     if not stages:
         return {"overall_pct": 0}
-    total = sum(s.completion_pct for s in stages)
-    return {"overall_pct": round(total / len(stages), 1)}
+    # Weighted average by category
+    total = 0.0
+    used_weight = 0.0
+    for cat, weight in CATEGORY_WEIGHTS.items():
+        cat_stages = [s for s in stages if s.category == cat]
+        if cat_stages:
+            cat_avg = sum(s.completion_pct for s in cat_stages) / len(cat_stages)
+            total += cat_avg * weight
+            used_weight += weight
+    # Fallback for stages without category
+    uncat = [s for s in stages if not s.category or s.category not in CATEGORY_WEIGHTS]
+    remaining = 1.0 - used_weight
+    if uncat and remaining > 0:
+        total += (sum(s.completion_pct for s in uncat) / len(uncat)) * remaining
+    return {"overall_pct": round(total, 1)}
 
 
 @router.post("/stages", dependencies=[Depends(require_admin)])
