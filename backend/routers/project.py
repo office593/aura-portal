@@ -16,6 +16,7 @@ class StageUpdate(BaseModel):
     target_date: Optional[str] = None
     completion_pct: Optional[float] = None
     description: Optional[str] = None
+    order: Optional[int] = None
 
 
 class StageCreate(BaseModel):
