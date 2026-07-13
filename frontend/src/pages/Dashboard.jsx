@@ -140,7 +140,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 {/* Percentage text inside the bar */}
-                <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-extrabold" style={{right:'auto', left:'calc(50% + 28px)'}}>
+                <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-extrabold" style={{whiteSpace:'nowrap'}}>
                   {overall}%
                 </span>
                 {activeStage && (
