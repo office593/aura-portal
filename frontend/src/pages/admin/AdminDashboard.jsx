@@ -294,22 +294,21 @@ function StagesManager() {
               {s.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{s.description}</p>}
             </div>
             <div className="flex items-center gap-2 flex-wrap shrink-0">
-              <select
-                value={s.status}
-                onChange={(e) => quickUpdate(s.id, 'status', e.target.value)}
-                className={`border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 ${statusColors[s.status]}`}
+              <button
+                onClick={() => {
+                  const next = s.status === 'completed' ? 'pending' : 'completed'
+                  quickUpdate(s.id, 'status', next)
+                  quickUpdate(s.id, 'completion_pct', next === 'completed' ? 100 : 0)
+                }}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  s.status === 'completed'
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-gray-300 text-transparent hover:border-green-400'
+                }`}
+                title={s.status === 'completed' ? 'בוטל — לחץ לביטול' : 'סמן כהושלם'}
               >
-                {statusOptions.map((o) => <option key={o} value={o}>{statusLabels[o]}</option>)}
-              </select>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number" min={0} max={100}
-                  value={s.completion_pct}
-                  onChange={(e) => quickUpdate(s.id, 'completion_pct', e.target.value)}
-                  className="border rounded-lg px-2 py-1.5 text-xs w-16 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <span className="text-xs text-gray-400">%</span>
-              </div>
+                ✓
+              </button>
               <div className="flex flex-col gap-0.5">
                 <button onClick={() => moveStage(s.id, -1)} className="text-gray-400 hover:text-gray-700 leading-none text-xs px-1">▲</button>
                 <button onClick={() => moveStage(s.id, 1)} className="text-gray-400 hover:text-gray-700 leading-none text-xs px-1">▼</button>
