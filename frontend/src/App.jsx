@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './AuthContext'
 import Login from './pages/Login'
-import HomePreview from './pages/HomePreview'
 import Dashboard from './pages/Dashboard'
 import PersonalArea from './pages/PersonalArea'
 import Gallery from './pages/Gallery'
@@ -26,7 +25,6 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/home-preview" element={<HomePreview />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/personal" element={<ProtectedRoute><PersonalArea /></ProtectedRoute>} />
           <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
