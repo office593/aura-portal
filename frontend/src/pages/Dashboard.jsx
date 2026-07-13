@@ -164,46 +164,64 @@ export default function Dashboard() {
         )
       })()}
 
-      {/* Stages */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">שלבי הפרויקט</h3>
-        <div className="space-y-4">
-          {stages.map((stage, idx) => (
-            <div key={stage.id} className="flex items-start gap-4">
-              {/* Step circle */}
-              <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
+      {/* Stages grouped by category */}
+      {(() => {
+        const CATEGORY_ORDER = ['תב"ע', 'תכנית עיצוב אדריכלי', 'היתר בנייה']
+        const CATEGORY_STYLES = {
+          'תב"ע': { header: 'bg-purple-600', bar: 'bg-purple-500' },
+          'תכנית עיצוב אדריכלי': { header: 'bg-blue-600', bar: 'bg-blue-500' },
+          'היתר בנייה': { header: 'bg-green-600', bar: 'bg-green-500' },
+        }
+        const grouped = CATEGORY_ORDER.map(cat => ({
+          cat, items: stages.filter(s => s.category === cat).sort((a, b) => a.order - b.order)
+        })).filter(g => g.items.length > 0)
+        const uncategorized = stages.filter(s => !s.category || !CATEGORY_ORDER.includes(s.category))
+
+        function renderStage(stage, idx) {
+          return (
+            <div key={stage.id} className="flex items-start gap-3">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                 stage.status === 'completed' ? 'bg-green-500 text-white' :
-                stage.status === 'active' ? 'bg-blue-600 text-white' :
-                'bg-gray-200 text-gray-400'
+                stage.status === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'
               }`}>
                 {stage.status === 'completed' ? '✓' : idx + 1}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 py-0.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-medium text-gray-800">{stage.name}</span>
+                  <span className="font-medium text-gray-800 text-sm">{stage.name}</span>
                   <StatusBadge status={stage.status} />
                 </div>
-                {stage.target_date && (
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    יעד: {new Date(stage.target_date).toLocaleDateString('he-IL')}
-                  </p>
-                )}
-                {stage.status !== 'pending' && (
-                  <div className="mt-2 w-full bg-gray-100 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full progress-bar-fill"
-                      style={{
-                        width: `${Math.max(stage.completion_pct || 0, stage.status === 'active' ? 5 : 0)}%`,
-                        background: stage.status === 'completed' ? '#22c55e' : '#1B2A4A'
-                      }}
-                    />
-                  </div>
-                )}
+                {stage.target_date && <p className="text-xs text-gray-400 mt-0.5">יעד: {new Date(stage.target_date).toLocaleDateString('he-IL')}</p>}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          )
+        }
+
+        return (
+          <div className="space-y-4 mb-6">
+            <h3 className="text-lg font-bold text-gray-800">שלבי הפרויקט</h3>
+            {grouped.map(({ cat, items }) => {
+              const style = CATEGORY_STYLES[cat] || { header: 'bg-gray-600', bar: 'bg-gray-500' }
+              const pct = items.length ? Math.round(items.reduce((a, s) => a + (s.completion_pct || 0), 0) / items.length) : 0
+              return (
+                <div key={cat} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className={`${style.header} px-5 py-3 flex items-center justify-between`}>
+                    <h4 className="text-white font-bold text-sm">{cat}</h4>
+                    <span className="text-white text-xs bg-white/20 px-2 py-1 rounded-full">{pct}% הושלם</span>
+                  </div>
+                  <div className="h-1 bg-gray-100"><div className={`h-full ${style.bar}`} style={{ width: `${pct}%` }} /></div>
+                  <div className="p-4 space-y-3">{items.map((s, i) => renderStage(s, i))}</div>
+                </div>
+              )
+            })}
+            {uncategorized.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                {uncategorized.map((s, i) => renderStage(s, i))}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Latest announcement */}
       {announcement && (

@@ -62,7 +62,7 @@ export default function Timeline() {
       <div className="space-y-6">
         {grouped.map(({ cat, items }) => {
           const style = CATEGORY_STYLES[cat] || { header: 'bg-gray-600', bar: 'bg-gray-500' }
-          const pct = items.length ? Math.round(items.filter(s => s.status === 'completed').length / items.length * 100) : 0
+          const pct = items.length ? Math.round(items.reduce((a, s) => a + (s.completion_pct || 0), 0) / items.length) : 0
           return (
             <div key={cat} className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className={`${style.header} px-5 py-3 flex items-center justify-between`}>
